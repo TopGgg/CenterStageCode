@@ -47,7 +47,17 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
     public static double distRatio = 3.1252933262936105;
     public static double ratioToFirstX = -3.7;
     public static double ratioToFirstY = -1.8;
-    public static double sizeRatio = 0.8;
+    public static double sizeRatio = 0.6;
+    public static double[] xMultiplier = new double[] {1,0.9,-0.4,0.5,-0.65,0.2,-1.2,-0.2};
+    public static double[] yMultiplier = new double[]{1,0.2,0.4,0.8,1,1.4,2.1,2.9};
+    public static double xMultiplierd = 0;
+    public static double yMultiplierd = 0;
+    public static int index = 0;
+
+    public static double[] spacing = new double[] {18,15,10,7,2,1,1.2,0.2};
+    public static double spacingd = 0;
+    public static int index2 = 0;
+
 
     // UNITS ARE METERS
     double tagsize;
@@ -61,6 +71,7 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 
     public AprilTagDetectionPipeline(double tagsize, double fx, double fy, double cx, double cy)
     {
+
         this.tagsize = tagsize;
         this.tagsizeX = tagsize;
         this.tagsizeY = tagsize;
@@ -146,25 +157,41 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
             }
         }
         length = Math.floor(length/n);
-        length = length % 2 == 0 ? length : length + 1;
+        length = length % 4 == 0 ? length : length + 2;
         if(center2 != null && center1 != null){
             distRatio = (center2.x - center1.x)/length;
         }
-        double centerToEdge = ratioSides *length;
-        Rect rectCrop = new Rect(0, 0, (int) (center.x-centerToEdge), 1080);
-//        Rect rectCrop2 = new Rect(new Point( 1920, 1080),new Point((int) (1920-(center.x)+centerToEdge)+centerToEdge*2, 0));
-        Rect rectCrop2 = new Rect(new Point( (int) (center.x+centerToEdge), 0),new Point(1920, 1080));
-        Rect rectCrop3 = new Rect(new Point(0, (int) (center.y-length)),new Point(1920, 1080));
-        Rect rectCrop4 = new Rect(new Point(0, 0),new Point(1920, length*ratioUp));
-
-        Imgproc.rectangle(input, rectCrop, new Scalar(255,0,0),-1);
-        Imgproc.rectangle(input, rectCrop2, new Scalar(255,0,0),-1);
-        Imgproc.rectangle(input, rectCrop3, new Scalar(255,0,0),-1);
-        Imgproc.rectangle(input, rectCrop4, new Scalar(255,0,0),-1);
+//        double centerToEdge = ratioSides *length;
+//        Rect rectCrop = new Rect(0, 0, (int) (center.x-centerToEdge), 1080);
+//        Rect rectCrop2 = new Rect(new Point( (int) (center.x+centerToEdge), 0),new Point(1920, 1080));
+//        Rect rectCrop3 = new Rect(new Point(0, (int) (center.y-length)),new Point(1920, 1080));
+//        Rect rectCrop4 = new Rect(new Point(0, 0),new Point(1920, length*ratioUp));
+//
+//        Imgproc.rectangle(input, rectCrop, new Scalar(255,0,0),-1);
+//        Imgproc.rectangle(input, rectCrop2, new Scalar(255,0,0),-1);
+//        Imgproc.rectangle(input, rectCrop3, new Scalar(255,0,0),-1);
+//        Imgproc.rectangle(input, rectCrop4, new Scalar(255,0,0),-1);
         Imgproc.circle(input, center, 30, new Scalar(0,255,0), -1);
         int R = (int) (sizeRatio*length);
-        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
-        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX+2*R, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
+
+        for(int x = 0; x < 7; x++){
+            for(int y = 0; y < 8; y++){
+                if(y%2==0 && x==6) continue;
+                if(index == y){
+                    xMultiplier[y] = xMultiplierd;
+                    yMultiplier[y] = yMultiplierd;
+                }
+//                if(index2 == y){
+//                    spacing[y] = spacingd;
+//                }
+                    Imgproc.circle(input,
+                            new Point(center.x + spacing[y]*x +length*ratioToFirstX + 2*x*R - xMultiplier[y]*R,
+                                    center.y +length*ratioToFirstY - 2*y*R + yMultiplier[y]*R),
+                            R, new Scalar(0,0,255), 2);
+            }
+        }
+//        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
+//        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX+2*R, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
 
 //        return new Mat(new Mat(input,rectCrop), rectCrop2);
         return input;
