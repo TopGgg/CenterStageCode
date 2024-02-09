@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode.Driving;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 
-public class Drive {
+public class OldDrive {
     public MecanumDrive drive;
 
-    public Drive(Motor FR, Motor FL, Motor BR, Motor BL){
+    public OldDrive(Motor FR, Motor FL, Motor BR, Motor BL){
         drive = new MecanumDrive(FL, FR, BL, BR);
     }
 
