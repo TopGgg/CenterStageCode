@@ -21,6 +21,7 @@ public class PropDetectionPipeline extends OpenCvPipeline {
     //Telemetry telemetry;
 
     static int color_zone = 1;
+    public static int maxDis = 235;
 
     int toggleShow = 1;
 
@@ -68,7 +69,7 @@ public class PropDetectionPipeline extends OpenCvPipeline {
         distance1 = color_distance(avgColor1, ELEMENT_COLOR);
         distance2 = color_distance(avgColor2, ELEMENT_COLOR);
 
-        if ((distance1 > 200) && (distance2 > 213)){
+        if ((distance1 > maxDis) && (distance2 > maxDis)){
             color_zone = 3;
             max_distance = -1;
         }else{

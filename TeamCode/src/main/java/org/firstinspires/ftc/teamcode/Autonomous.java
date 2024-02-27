@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.vision.PropDetection;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Auto", group="Auto")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Auto", group="Auto", preselectTeleOp = "Main Tele Op")
 @Config
 public class Autonomous extends LinearOpMode{
 
@@ -21,9 +21,9 @@ public class Autonomous extends LinearOpMode{
         LEFT
     }
 
-    public static int element_zone = 2;
+    public static int element_zone = 3;
 
-//    private PropDetection propDetection = null;
+    private PropDetection propDetection = null;
     Motor FR;
     Motor FL;
     Motor BR;
@@ -44,7 +44,7 @@ public class Autonomous extends LinearOpMode{
         BR = new Motor(hardwareMap, "BR");
         BL = new Motor(hardwareMap, "BL");
         intake = new Motor(hardwareMap, "intake");
-//        propDetection = new PropDetection(hardwareMap);
+        propDetection = new PropDetection(hardwareMap);
 
         telemetry.addData("Object Creation", "Done");
         telemetry.update();
@@ -59,7 +59,7 @@ public class Autonomous extends LinearOpMode{
         String curAlliance = "red";
 //        waitForStart();
         while (!opModeIsActive() && !isStopRequested()){
-//            element_zone = propDetection.elementDetection(telemetry);
+            element_zone = propDetection.elementDetection(telemetry);
 //            telemetry.addData("getMaxDistance", propDetection.getMaxDistance());
 
 //            if (togglePreview && gamepad2.a){
@@ -90,24 +90,69 @@ public class Autonomous extends LinearOpMode{
 
             telemetry.update();
         }
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-        drive.setExternalHeading(Math.toRadians(-90));
-        drive.setPoseEstimate(new Pose2d(-36,62));
-        TrajectorySequence trajectory = drive.trajectorySequenceBuilder(new Pose2d(-36, 62, Math.toRadians(-90)))
-                .forward(20)
-//                .lineTo(new Vector2d(-36, 20))
-//                .addDisplacementMarker(()->{intake.set(1);})
-//                .lineTo(new Vector2d(-36, 40))
-                .build();
-        int zone = element_zone;
-        telemetry.addData("Object", "Passed waitForStart");
-        telemetry.update();
-        if(zone == 2){
-            drive.followTrajectorySequence(trajectory);
+
+        if(element_zone == 2){
+            //2
+            powerAll(0.3,0.3,0.3,0.3);
+            sleep_(950);
+            powerAll(0,0,0,0);
+            intake.set(1);
+            sleep_(1500);
+            powerAll(-0.3,-0.3,-0.3,-0.3);
+            sleep_(700);
+            powerAll(0,0,0,0);
             intake.set(0);
+        }else if(element_zone == 3){
+            //3
+            powerAll(0.3,0.3,0.3,0.3);
+            sleep_(850);
+            powerAll(-0.3,0.3,-0.3,0.3);
+            sleep_(570);
+            powerAll(0,0,0,0);
+            sleep_(100);
+            powerAll(0.3,0.3,0.3,0.3);
+            sleep_(350);
+            powerAll(0,0,0,0);
+            intake.set(1);
+            sleep_(1500);
+            powerAll(-0.3,-0.3,-0.3,-0.3);
+            sleep_(500);
+            powerAll(0,0,0,0);
+            intake.set(0);
+        }else {
+            //1
+            powerAll(0.3,0.3,0.3,0.3);
+            sleep_(850);
+            powerAll(0.3,-0.3,0.3,-0.3);
+            sleep_(570);
+            powerAll(0,0,0,0);
+            sleep_(100);
+            powerAll(0.3,0.3,0.3,0.3);
+            sleep_(350);
+            powerAll(0,0,0,0);
+            intake.set(1);
+            sleep_(1500);
+            powerAll(-0.3,-0.3,-0.3,-0.3);
+            sleep_(500);
+            powerAll(0,0,0,0);
+            intake.set(0);
+
         }
 
 
     }
+    public void sleep_(long ms){
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+public void powerAll(double FL, double FR, double BL, double BR){
+        this.FL.set(FL);
+        this.FR.set(-FR);
+        this.BL.set(BL);
+        this.BR.set(-BR);
+}
 
 }

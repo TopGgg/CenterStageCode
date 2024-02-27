@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.opencv.core.Mat;
 
 import java.util.Set;
 
@@ -29,46 +30,21 @@ public class CarmelOfirTest extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        byte w = 1;
-
-        Pose2d startPose = new Pose2d(0, 0, Math.toRadians(90));
-
-        drive.setPoseEstimate(startPose);
-
-
-        //Trajectory trajectory1 = drive.trajectoryBuilder(startPose)
-        //    .forward(-27.5)
-        //    .build();
-
-        //Trajectory trajectory2 = drive.trajectoryBuilder(trajectory1.end())
-        //        .forward(27.5)
-        //        .build();
-
-        Trajectory trajectory4 = drive.trajectoryBuilder(new Pose2d())
-                .splineTo(new Vector2d(-36,64.2), Math.toRadians(180))
-
-                .addDisplacementMarker(()->{
-
-                })
-                .splineTo(new Vector2d(0,0), Math.toRadians(180))
+        Trajectory trajectory1 =drive.trajectoryBuilder(new Pose2d(0,0, Math.toRadians(0)))
+                .forward(27.5)
                 .build();
-
-        Trajectory trajectory3 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(27.5, 0), Math.toRadians(0))
-                .build();
-
-
         waitForStart();
+        drive.followTrajectory(trajectory1);
 
-        if (isStopRequested()) return;
+        Trajectory trajectory2 = drive.trajectoryBuilder(new Pose2d(0,0), Math.toRadians(0))
+                .forward(41)
+                .strafeLeft(11)
+                .addDisplacementMarker(()->{}).build();
 
-        if (w==1) {
-            drive.followTrajectory(trajectory4);
-            //motor stuff
-//            drive.followTrajectory(trajectory2);
-        } else if (w==2) {
-            drive.followTrajectory(trajectory3);
-        };
+
+
+
+
 
 
         Pose2d poseEstimate = drive.getPoseEstimate();
@@ -77,6 +53,10 @@ public class CarmelOfirTest extends LinearOpMode {
         telemetry.addData("finalHeading", poseEstimate.getHeading());
         telemetry.update();
 
-        while (!isStopRequested() && opModeIsActive()) ;
+        while (!isStopRequested() && opModeIsActive()){
+
+        };
+
+
     }
 }

@@ -25,11 +25,13 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.AutoPlay.Board;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -69,7 +71,9 @@ public class AprilTagTest extends LinearOpMode
     {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+        FtcDashboard.getInstance().startCameraStream(camera, 0);
+        Board.Backdrop backdrop = new Board.Backdrop();
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy,telemetry, backdrop);
 
         camera.setPipeline(aprilTagDetectionPipeline);
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
@@ -103,9 +107,9 @@ public class AprilTagTest extends LinearOpMode
             // If there's been a new frame...
             if(detections != null)
             {
-                telemetry.addData("FPS", camera.getFps());
-                telemetry.addData("Overhead ms", camera.getOverheadTimeMs());
-                telemetry.addData("Pipeline ms", camera.getPipelineTimeMs());
+//                telemetry.addData("FPS", camera.getFps());
+//                telemetry.addData("Overhead ms", camera.getOverheadTimeMs());
+//                telemetry.addData("Pipeline ms", camera.getPipelineTimeMs());
 
                 // If we don't see any tags
                 if(detections.size() == 0)
@@ -128,17 +132,17 @@ public class AprilTagTest extends LinearOpMode
                     {
                         Orientation rot = Orientation.getOrientation(detection.pose.R, AxesReference.INTRINSIC, AxesOrder.YXZ, AngleUnit.DEGREES);
 
-                        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-                        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
-                        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
-                        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
-                        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
-                        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
-                        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
+//                        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+//                        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
+//                        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
+//                        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
+//                        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
+//                        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
+//                        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
                     }
                 }
 
-                telemetry.update();
+//                telemetry.update();
             }
 
             sleep(20);

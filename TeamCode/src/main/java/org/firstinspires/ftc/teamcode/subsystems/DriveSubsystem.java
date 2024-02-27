@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SimpleTeleSample.subsystems;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 import static org.firstinspires.ftc.teamcode.Driving.MainTeleOp.heading;
 
@@ -52,6 +52,6 @@ public class DriveSubsystem extends SubsystemBase {
 
         drive.driveFieldCentric(-strafe.getAsDouble()*speedMultiplier,
                 -forward.getAsDouble()*speedMultiplier,
-                rotation.getAsDouble()*speedMultiplier, heading);
+                -rotation.getAsDouble()*speedMultiplier, heading);
     }
 }

@@ -1,14 +1,18 @@
 package org.firstinspires.ftc.teamcode.Driving;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.AutoPlay.BoardDetection;
+import org.firstinspires.ftc.teamcode.AutoPlay.CameraAligner;
 import org.firstinspires.ftc.teamcode.IMUUtils;
-import org.firstinspires.ftc.teamcode.SimpleTeleSample.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.mathUtils.AngleUtils;
 import org.firstinspires.ftc.teamcode.subsystems.DriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeCommand;
@@ -27,6 +31,7 @@ public class MainTeleOp extends CommandOpMode {
     public void initialize() {
         GamepadEx driver = new GamepadEx(gamepad1);
         GamepadEx operator = new GamepadEx(gamepad2);
+        BoardDetection detection = new BoardDetection(hardwareMap);
         imu.init(hardwareMap, this);
 
         schedule(new RunCommand(()->{
@@ -45,6 +50,8 @@ public class MainTeleOp extends CommandOpMode {
         );
 
         LiftSubsystem liftSubsystem = new LiftSubsystem(new Motor(hardwareMap, "lift"),
+                hardwareMap.servo.get("stick"), hardwareMap.servo.get("rotation"),
+                hardwareMap.servo.get("gripper"),
                 operator, telemetry);
 
         IntakeSubsystem intakeSubsystem = new IntakeSubsystem(
@@ -53,11 +60,19 @@ public class MainTeleOp extends CommandOpMode {
                 telemetry
         );
 
+        CameraAligner aligner = new CameraAligner(hardwareMap.servo.get("cameraServo"));
 
+        aligner.setDefaultCommand(new CameraAligner.CameraAlignerCommand(aligner));
         driveSystem.setDefaultCommand(new DriveCommand(driveSystem));
         liftSubsystem.setDefaultCommand(new LiftCommand(liftSubsystem));
         intakeSubsystem.setDefaultCommand(new IntakeCommand(intakeSubsystem));
 
+        schedule(new RunCommand(()->{
+            telemetry.addData("heading", normalHeading);
+            if(driver.getButton(GamepadKeys.Button.A)){
+                imu.init(hardwareMap,MainTeleOp.this);
+            }
+        }));
         schedule(new RunCommand(telemetry::update));
 
     }
