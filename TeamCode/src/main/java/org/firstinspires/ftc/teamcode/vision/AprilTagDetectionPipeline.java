@@ -24,11 +24,18 @@ import org.openftc.apriltag.AprilTagPose;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Config
 class AprilTagDetectionPipeline extends OpenCvPipeline
 {
+    public static double[] rowXMultiplier = new double[6];
+    public static double[] rowYMultiplier = new double[6];
+    public static double[] RadiusMultiplier = new double[] {1,0.97,0.97,0.92,0,0};
+    public static double Radius = 0;
+    public static double X = 0;
+    public static double Y = 0;
     public static Point[][] margin = new Point[7][6];
     public static int xA = 0;
     public static int yA = 0;
@@ -77,7 +84,7 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
     public static double ratioUp = 9;
     public static double distRatio = 3.1252933262936105;
     public static double ratioToFirstX = -3.7;
-    public static double ratioToFirstY = -1.8;
+    public static double ratioToFirstY = -1.7;
     public static double sizeRatio = 0.7;
     public static double[] xMultiplier = new double[] {1,0.9,-0.4,0.5,-0.65,0.2,-1.2,-0.2};
     public static double[] yMultiplier = new double[]{1,0.2,0.4,0.8,1,1.4,2.1,2.9};
@@ -101,6 +108,12 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
     private final Object decimationSync = new Object();
     private Telemetry telemetry;
     private Board.Backdrop board;
+    public static double RMultiplier;
+    public static double realRadius;
+    public static double dDead;
+    public static double hCam;
+    public static double CF = 12.7;
+    public static double distConst;
 
     public AprilTagDetectionPipeline(double tagsize, double fx, double fy, double cx, double cy, Telemetry telemetry, Board.Backdrop board)
     {
@@ -166,7 +179,7 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
         double n = 0;
         Point center2 = null;
         Point center1 = null;
-
+        double distFromCenter = 0;
         for(AprilTagDetection detection : detections)
         {
 //            if(detection.id == 2){
@@ -181,6 +194,7 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
             n++;
 
             double l = length/n;
+            distFromCenter = detection.pose.x;
 
             if(detection.id == 2){
                 center = detection.center;
@@ -209,24 +223,30 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //        Imgproc.rectangle(input, rectCrop4, new Scalar(255,0,0),-1);
         Imgproc.circle(input, center, 30, new Scalar(0,255,0), -1);
         int R = (int) (sizeRatio*length);
+//        RadiusMultiplier[index] = Radius;
+//        rowXMultiplier[index] = X;
+//        rowYMultiplier[index] = Y;
+
 
         for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 6; y++){
+            for(int y = 0; y < 4; y++){
                 if(y%2==0 && x==6) continue;
-                if(index == y){
-                    xMultiplier[y] = xMultiplierd;
-                    yMultiplier[y] = yMultiplierd;
-                }
+
+//                if(index == y){
+//                    xMultiplier[y] = xMultiplierd;
+//                    yMultiplier[y] = yMultiplierd;
+//                }
 //                if(index2 == y){
 //                    spacing[y] = spacingd;
 //                }
-
-                    double xPoint = center.x + spacing[y]*x +length*ratioToFirstX + 2*x*R - xMultiplier[y]*R;
-                    double yPoint = center.y +length*ratioToFirstY - 2*y*R + yMultiplier[y]*R;
-                    if(margin[x][y] != null){
-                        xPoint += margin[x][y].x*length;
-                        yPoint += margin[x][y].y*length;
-                    }
+                    double newR = R*RadiusMultiplier[y];
+                    double halfWidthHex = Math.sqrt(3)/2*newR;
+                    double xPoint = center.x -6*halfWidthHex+2*newR*x - (y%2 == 0 ? 0 : halfWidthHex) - rowXMultiplier[y]*length + distFromCenter*distConst;
+                    double yPoint = center.y + length*ratioToFirstY - 1.5*y*newR - rowYMultiplier[y]*length;
+//                    if(margin[x][y] != null){
+//                        xPoint += margin[x][y].x*length;
+//                        yPoint += margin[x][y].y*length;
+//                    }
                     Scalar color = getAverageCircleColor((int) xPoint, (int) yPoint,R, input);
 //                    Scalar color = blankRef;
                     float[] hsv = new float[3];
@@ -270,9 +290,12 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
                         }
                     }
 
-                    Imgproc.circle(input,
-                        new Point(xPoint, yPoint),
-                        R, realColor, -1);
+//                    Imgproc.circle(input,
+//                        new Point(xPoint, yPoint),
+//                            (int) newR, realColor, -1);
+//                    Imgproc.circle(input,
+//                        new Point(xPoint, yPoint),
+//                            (int) newR, new Scalar(0,0,0), 10);
 
 //                    if(x == 0 && y == 0){
 //                        telemetry.addData("R", color.val[0]);
@@ -290,7 +313,10 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //        Scalar color = getAverageCircleColor((int) center.x, (int) cente
 //        r.y,300, input);
 //        telemetry.addData("score", board.score());
-        telemetry.update();
+//        telemetry.addData("Radius", Arrays.toString(RadiusMultiplier));
+//        telemetry.addData("X", Arrays.toString(rowXMultiplier));
+//        telemetry.addData("Radius", Arrays.toString(rowYMultiplier));
+//        telemetry.update();
         return input;
     }
 
@@ -519,6 +545,20 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
             return blankRef;
         }
     }
+
+    public double getYCorrection(double d, int yHeight){
+        double dRow = 1.5*yHeight*realRadius + dDead;
+        double dFromRow = Math.sin(Math.toRadians(30))*dRow;
+        double hFromGround = Math.cos(Math.toRadians(30))*dRow;
+        double delta = hFromGround - hCam - Math.sqrt(3)*realRadius;
+        double DELTA = hFromGround - hCam;
+        double AC = Math.sqrt(Math.pow(dFromRow,2) + Math.pow(delta,2));
+        double BC = Math.sqrt(Math.pow(DELTA, 2) + Math.pow(dFromRow,2));
+        double AB = Math.sqrt(3)*realRadius;
+        double theta = Math.acos(-(Math.pow(AB,2)-Math.pow(BC,2)-Math.pow(AC,2))/(2*AC*AB));
+        return (CF*theta)/2;
+    }
+
     class Pose
     {
         Mat rvec;

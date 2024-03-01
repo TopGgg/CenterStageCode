@@ -132,17 +132,17 @@ public class AprilTagTest extends LinearOpMode
                     {
                         Orientation rot = Orientation.getOrientation(detection.pose.R, AxesReference.INTRINSIC, AxesOrder.YXZ, AngleUnit.DEGREES);
 
-//                        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-//                        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
-//                        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
-//                        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
-//                        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
-//                        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
-//                        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
+                        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+                        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
+                        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
+                        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
+                        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
+                        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
+                        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
                     }
                 }
 
-//                telemetry.update();
+                telemetry.update();
             }
 
             sleep(20);
