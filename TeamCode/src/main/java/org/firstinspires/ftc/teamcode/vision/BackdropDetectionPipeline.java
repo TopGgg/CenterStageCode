@@ -24,11 +24,10 @@ import org.openftc.apriltag.AprilTagPose;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Config
-class AprilTagDetectionPipeline extends OpenCvPipeline
+public
+class BackdropDetectionPipeline extends OpenCvPipeline
 {
     public static double[] rowXMultiplier = new double[6];
     public static double[] rowYMultiplier = new double[6];
@@ -115,7 +114,9 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
     public static double CF = 12.7;
     public static double distConst;
 
-    public AprilTagDetectionPipeline(double tagsize, double fx, double fy, double cx, double cy, Telemetry telemetry, Board.Backdrop board)
+    public static boolean active = true;
+
+    public BackdropDetectionPipeline(double tagsize, double fx, double fy, double cx, double cy, Telemetry telemetry, Board.Backdrop board)
     {
 
         this.tagsize = tagsize;
@@ -153,64 +154,61 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
     @Override
     public Mat processFrame(Mat input)
     {
-        margin[xA][yA] = new Point(xCorrection, yCorrection);
-        // Convert to greyscale
-        Imgproc.cvtColor(input, grey, Imgproc.COLOR_RGBA2GRAY);
+        if(active) {
+            margin[xA][yA] = new Point(xCorrection, yCorrection);
+            // Convert to greyscale
+            Imgproc.cvtColor(input, grey, Imgproc.COLOR_RGBA2GRAY);
 
-        synchronized (decimationSync)
-        {
-            if(needToSetDecimation)
-            {
-                AprilTagDetectorJNI.setApriltagDetectorDecimation(nativeApriltagPtr, decimation);
-                needToSetDecimation = false;
+            synchronized (decimationSync) {
+                if (needToSetDecimation) {
+                    AprilTagDetectorJNI.setApriltagDetectorDecimation(nativeApriltagPtr, decimation);
+                    needToSetDecimation = false;
+                }
             }
-        }
 
-        // Run AprilTag
-        detections = AprilTagDetectorJNI.runAprilTagDetectorSimple(nativeApriltagPtr, grey, tagsize, fx, fy, cx, cy);
+            // Run AprilTag
+            detections = AprilTagDetectorJNI.runAprilTagDetectorSimple(nativeApriltagPtr, grey, tagsize, fx, fy, cx, cy);
 
-        synchronized (detectionsUpdateSync)
-        {
-            detectionsUpdate = detections;
-        }
+            synchronized (detectionsUpdateSync) {
+                detectionsUpdate = detections;
+            }
 
-        // For fun, use OpenCV to draw 6DOF markers on the image.
-        double length = 0;
-        double n = 0;
-        Point center2 = null;
-        Point center1 = null;
-        double distFromCenter = 0;
-        for(AprilTagDetection detection : detections)
-        {
+            // For fun, use OpenCV to draw 6DOF markers on the image.
+            double length = 0;
+            double n = 0;
+            Point center2 = null;
+            Point center1 = null;
+            double distFromCenter = 0;
+            for (AprilTagDetection detection : detections) {
 //            if(detection.id == 2){
 //                center = detection.center;
 //            }else
 
 
-            Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
-            //Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
-            drawAxisMarker(input, tagsizeY/2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
-            length += draw3dCubeMarker(input, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
-            n++;
+                Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
+                //Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
+                drawAxisMarker(input, tagsizeY / 2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
+                length += draw3dCubeMarker(input, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
+                n++;
 
-            double l = length/n;
-            distFromCenter = detection.pose.x;
+                double l = length / n;
+                distFromCenter = detection.pose.x;
 
-            if(detection.id == 2){
-                center = detection.center;
-                center2 = detection.center;
-            }else if(detection.id == 1){
-                center1 = detection.center;
-                center = new Point(detection.center.x+l*distRatio, detection.center.y);
-            }else if(detection.id == 3){
-                center = new Point(detection.center.x-l*distRatio, detection.center.y);
+                if (detection.id == 2) {
+                    center = detection.center;
+                    center2 = detection.center;
+                } else if (detection.id == 1) {
+                    center1 = detection.center;
+                    center = new Point(detection.center.x + l * distRatio, detection.center.y);
+                } else if (detection.id == 3) {
+                    center = new Point(detection.center.x - l * distRatio, detection.center.y);
+                }
             }
-        }
-        length = Math.floor(length/n);
-        length = length % 4 == 0 ? length : length + 2;
-        if(center2 != null && center1 != null){
-            distRatio = (center2.x - center1.x)/length;
-        }
+            length = Math.floor(length / n);
+            length = length % 4 == 0 ? length : length + 2;
+            if (center2 != null && center1 != null) {
+                distRatio = (center2.x - center1.x) / length;
+            }
 //        double centerToEdge = ratioSides *length;
 //        Rect rectCrop = new Rect(0, 0, (int) (center.x-centerToEdge), 1080);
 //        Rect rectCrop2 = new Rect(new Point( (int) (center.x+centerToEdge), 0),new Point(1920, 1080));
@@ -221,16 +219,16 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //        Imgproc.rectangle(input, rectCrop2, new Scalar(255,0,0),-1);
 //        Imgproc.rectangle(input, rectCrop3, new Scalar(255,0,0),-1);
 //        Imgproc.rectangle(input, rectCrop4, new Scalar(255,0,0),-1);
-        Imgproc.circle(input, center, 30, new Scalar(0,255,0), -1);
-        int R = (int) (sizeRatio*length);
+            Imgproc.circle(input, center, 30, new Scalar(0, 255, 0), -1);
+            int R = (int) (sizeRatio * length);
 //        RadiusMultiplier[index] = Radius;
 //        rowXMultiplier[index] = X;
 //        rowYMultiplier[index] = Y;
 
 
-        for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 4; y++){
-                if(y%2==0 && x==6) continue;
+            for (int x = 0; x < 7; x++) {
+                for (int y = 0; y < 4; y++) {
+                    if (y % 2 == 0 && x == 6) continue;
 
 //                if(index == y){
 //                    xMultiplier[y] = xMultiplierd;
@@ -239,63 +237,62 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //                if(index2 == y){
 //                    spacing[y] = spacingd;
 //                }
-                    double newR = R*RadiusMultiplier[y];
-                    double halfWidthHex = Math.sqrt(3)/2*newR;
-                    double xPoint = center.x -6*halfWidthHex+2*newR*x - (y%2 == 0 ? 0 : halfWidthHex) - rowXMultiplier[y]*length + distFromCenter*distConst;
-                    double yPoint = center.y + length*ratioToFirstY - 1.5*y*newR - rowYMultiplier[y]*length;
+                    double newR = R * RadiusMultiplier[y];
+                    double halfWidthHex = Math.sqrt(3) / 2 * newR;
+                    double xPoint = center.x - 6 * halfWidthHex + 2 * newR * x - (y % 2 == 0 ? 0 : halfWidthHex) - rowXMultiplier[y] * length + distFromCenter * distConst;
+                    double yPoint = center.y + length * ratioToFirstY - 1.5 * y * newR - rowYMultiplier[y] * length;
 //                    if(margin[x][y] != null){
 //                        xPoint += margin[x][y].x*length;
 //                        yPoint += margin[x][y].y*length;
 //                    }
-                    Scalar color = getAverageCircleColor((int) xPoint, (int) yPoint,R, input);
+                    Scalar color = getAverageCircleColor((int) xPoint, (int) yPoint, R, input);
 //                    Scalar color = blankRef;
                     float[] hsv = new float[3];
                     Color.RGBToHSV((int) color.val[0], (int) color.val[1], (int) color.val[2], hsv);
-                    if(y == 0){
-                        if(x == 2){
-                            telemetry.addData("0Color", "["+Math.floor(hsv[0])+","+Math.floor(hsv[1])+","+Math.floor(hsv[2])+"]");
-                        }else if(x == 3){
-                            telemetry.addData("1Color", "["+Math.floor(hsv[0])+","+Math.floor(hsv[1])+","+Math.floor(hsv[2])+"]");
+                    if (y == 0) {
+                        if (x == 2) {
+//                            telemetry.addData("0Color", "[" + Math.floor(hsv[0]) + "," + Math.floor(hsv[1]) + "," + Math.floor(hsv[2]) + "]");
+                        } else if (x == 3) {
+//                            telemetry.addData("1Color", "[" + Math.floor(hsv[0]) + "," + Math.floor(hsv[1]) + "," + Math.floor(hsv[2]) + "]");
                         }
                     }
-                    Scalar realColor = null;
-                    if(hsv[1] < 0.2 && hsv[2] < 0.65){
-                        //blank
-                        realColor = blankRef;
-                    }else {
+                    Scalar realColor = blankRef;
+                    if (!(hsv[1] < 0.2) || !(hsv[2] < 0.65)) {
                         double yellowDistance = color_distance(color, yellowRef);
                         double greenDistance = color_distance(color, greenRef);
                         double purpleDistance = color_distance(color, purpleRef);
                         double whiteDistance = color_distance(color, whiteRef);
                         double[] distances = new double[]{yellowDistance, greenDistance, purpleDistance
-                                ,whiteDistance};
+                                , whiteDistance};
                         double min = Double.MAX_VALUE;
-                        for(double dis : distances){
-                            if(dis < min){
+                        for (double dis : distances) {
+                            if (dis < min) {
                                 min = dis;
                             }
                         }
-                        if(min == yellowDistance){
-                            board.findPixel(x,y).type = Board.PIXEL_TYPE.YELLOW;
+                        if (min == yellowDistance) {
+                            board.findPixel(x, y).type = Board.PIXEL_TYPE.YELLOW;
                             realColor = yellowRef;
-                        }else if(min == greenDistance){
-                            board.findPixel(x,y).type = Board.PIXEL_TYPE.GREEN;
+                        } else if (min == greenDistance) {
+                            board.findPixel(x, y).type = Board.PIXEL_TYPE.GREEN;
                             realColor = greenRef;
-                        }else if(min == purpleDistance){
-                            board.findPixel(x,y).type = Board.PIXEL_TYPE.PURPLE;
+                        } else if (min == purpleDistance) {
+                            board.findPixel(x, y).type = Board.PIXEL_TYPE.PURPLE;
                             realColor = purpleRef;
-                        }else if(min == whiteDistance){
-                            board.findPixel(x,y).type = Board.PIXEL_TYPE.WHITE;
+                        } else if (min == whiteDistance) {
+                            board.findPixel(x, y).type = Board.PIXEL_TYPE.WHITE;
                             realColor = whiteRef;
                         }
+                    } else {
+                        board.findPixel(x, y).type = Board.PIXEL_TYPE.NONE;
                     }
 
-//                    Imgproc.circle(input,
-//                        new Point(xPoint, yPoint),
-//                            (int) newR, realColor, -1);
-//                    Imgproc.circle(input,
-//                        new Point(xPoint, yPoint),
-//                            (int) newR, new Scalar(0,0,0), 10);
+                    Imgproc.circle(input,
+                            new Point(xPoint, yPoint),
+                            (int) newR, realColor, -1);
+                    Imgproc.circle(input,
+                            new Point(xPoint, yPoint),
+                            (int) newR, new Scalar(0, 0, 0), 10);
 
 //                    if(x == 0 && y == 0){
 //                        telemetry.addData("R", color.val[0]);
@@ -303,8 +300,8 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //                        telemetry.addData("B", color.val[2]);
 //                        telemetry.update();
 //                    }
+                }
             }
-        }
 //        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
 //        Imgproc.circle(input, new Point(center.x +length*ratioToFirstX+2*R, center.y +length*ratioToFirstY), R, new Scalar(0,0,255), 5);
 
@@ -312,7 +309,14 @@ class AprilTagDetectionPipeline extends OpenCvPipeline
 //        Imgproc.circle(input, center, 300, new Scalar(255,0,0), 10);
 //        Scalar color = getAverageCircleColor((int) center.x, (int) cente
 //        r.y,300, input);
+        }
+
+
+//        Board.Action[] actions = board.getBestActions();
 //        telemetry.addData("score", board.score());
+//        telemetry.addData("Action 1", actions[0].toString());
+//        telemetry.addData("Action 2", actions[1].toString());
+//        telemetry.addData("Action 3", actions[2].toString());
 //        telemetry.addData("Radius", Arrays.toString(RadiusMultiplier));
 //        telemetry.addData("X", Arrays.toString(rowXMultiplier));
 //        telemetry.addData("Radius", Arrays.toString(rowYMultiplier));

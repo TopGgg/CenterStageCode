@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Driving;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
@@ -8,7 +10,9 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.AutoPlay.AutoPlay;
 import org.firstinspires.ftc.teamcode.AutoPlay.BoardDetection;
+import org.firstinspires.ftc.teamcode.AutoPlay.BoardDetectionPipeline;
 import org.firstinspires.ftc.teamcode.AutoPlay.CameraAligner;
 import org.firstinspires.ftc.teamcode.IMUUtils;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
@@ -29,9 +33,9 @@ public class MainTeleOp extends CommandOpMode {
 
     @Override
     public void initialize() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         GamepadEx driver = new GamepadEx(gamepad1);
         GamepadEx operator = new GamepadEx(gamepad2);
-        BoardDetection detection = new BoardDetection(hardwareMap);
         imu.init(hardwareMap, this);
 
         schedule(new RunCommand(()->{
@@ -39,8 +43,8 @@ public class MainTeleOp extends CommandOpMode {
             normalHeading = AngleUtils.convertToNormalAngle(heading);
             correction = AngleUtils.checkCorrection(operator.getButton(GamepadKeys.Button.A),
                     normalHeading);
+            operator.readButtons();
         }));
-
         DriveSubsystem driveSystem = new DriveSubsystem(
                 new Motor(hardwareMap, "FL"),
                 new Motor(hardwareMap, "FR"),
@@ -60,18 +64,26 @@ public class MainTeleOp extends CommandOpMode {
                 telemetry
         );
 
-        CameraAligner aligner = new CameraAligner(hardwareMap.servo.get("cameraServo"));
+        AutoPlay autoPlay = new AutoPlay(this,hardwareMap,telemetry,operator);
 
-        aligner.setDefaultCommand(new CameraAligner.CameraAlignerCommand(aligner));
+//        CameraAligner aligner = new CameraAligner(hardwareMap.servo.get("cameraServo"));
+//
+//        aligner.setDefaultCommand(new CameraAligner.CameraAlignerCommand(aligner));
         driveSystem.setDefaultCommand(new DriveCommand(driveSystem));
         liftSubsystem.setDefaultCommand(new LiftCommand(liftSubsystem));
         intakeSubsystem.setDefaultCommand(new IntakeCommand(intakeSubsystem));
+        autoPlay.setDefaultCommand(new AutoPlay.AutoPlayCommand(autoPlay));
 
         schedule(new RunCommand(()->{
             telemetry.addData("heading", normalHeading);
             if(driver.getButton(GamepadKeys.Button.A)){
                 imu.init(hardwareMap,MainTeleOp.this);
             }
+            telemetry.addData("score", AutoPlay.score);
+            telemetry.addData("action 1", AutoPlay.action1);
+            telemetry.addData("action 2", AutoPlay.action2);
+            telemetry.addData("action 3", AutoPlay.action3);
+            telemetry.addData("AutoPlay Active", BoardDetectionPipeline.active);
         }));
         schedule(new RunCommand(telemetry::update));
 
