@@ -44,7 +44,7 @@ public class AutoPlay extends SubsystemBase {
                 while ((System.currentTimeMillis() - start) < 3000 && context.opModeIsActive() && !context.isStopRequested());
             }
         }).start();
-        toggle = () -> operator.wasJustPressed(GamepadKeys.Button.DPAD_DOWN);
+        toggle = () -> operator.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT);
     }
 
     public void plan(){

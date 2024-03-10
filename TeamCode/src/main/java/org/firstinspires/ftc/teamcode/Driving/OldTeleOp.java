@@ -27,7 +27,7 @@ public class OldTeleOp extends LinearOpMode {
     Motor intake;
     PlaneLauncher planeLauncher;
 
-    IMUUtils imu = new IMUUtils();
+    IMUUtils imu = new IMUUtils(null);
 
     double heading;
     double normalHeading;

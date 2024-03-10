@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.auto;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.teamcode.IMUUtils;
 import org.firstinspires.ftc.teamcode.mathUtils.AngleUtils;
@@ -12,7 +14,7 @@ import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 public class MainAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        IMUUtils imu = new IMUUtils();
+        IMUUtils imu = new IMUUtils(null);
         imu.init(hardwareMap,this);
         Robot robot = new Robot(new Motor(hardwareMap, "FL"),
                 new Motor(hardwareMap, "FR"),
@@ -23,6 +25,7 @@ public class MainAuto extends LinearOpMode {
         LiftSubsystem liftSubsystem = new LiftSubsystem(new Motor(hardwareMap, "lift"),
                 hardwareMap.servo.get("stick"), hardwareMap.servo.get("rotation"),
                 hardwareMap.servo.get("gripper"),
+                hardwareMap.get(DistanceSensor.class, "grip"),
                 null, telemetry);
 
         waitForStart();

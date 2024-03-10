@@ -21,14 +21,13 @@ public class LocalizationTest extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        drive.setPoseEstimate(new Pose2d(-32,62));
 
         waitForStart();
 
         while (!isStopRequested()) {
             drive.setWeightedDrivePower(
                     new Pose2d(
-                            gamepad1.left_stick_y,
+                            -gamepad1.left_stick_y,
                             -gamepad1.left_stick_x,
                             -gamepad1.right_stick_x
                     )

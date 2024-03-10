@@ -11,6 +11,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Driving.MainTeleOp;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -18,7 +19,8 @@ import java.util.function.DoubleSupplier;
 public class DriveSubsystem extends SubsystemBase {
     private DoubleSupplier strafe, forward, rotation;
     private BooleanSupplier fast, slow;
-    private MecanumDrive drive;
+    public MecanumDrive drive;
+    public Motor FL,FR,BL,BR;
     private Telemetry telemetry;
     public static double speedMultiplier = 0.65;
 
@@ -35,6 +37,11 @@ public class DriveSubsystem extends SubsystemBase {
 
         drive = new MecanumDrive(FL, FR, BL, BR);
         this.telemetry = telemetry;
+        this.FL = FL;
+        this.FR = FR;
+        this.BL = BL;
+        this.BR = BR;
+
     }
 
     public void drive() {
@@ -49,9 +56,12 @@ public class DriveSubsystem extends SubsystemBase {
         }
 
         telemetry.addData("multiplier", speedMultiplier);
-
-        drive.driveFieldCentric(-strafe.getAsDouble()*speedMultiplier,
-                -forward.getAsDouble()*speedMultiplier,
-                -rotation.getAsDouble()*speedMultiplier, heading);
+        if(MainTeleOp.isFalling){
+            drive.driveRobotCentric(0,MainTeleOp.isFallingBack ? -1 : 1, 0);
+        }else{
+            drive.driveFieldCentric(-strafe.getAsDouble()*speedMultiplier,
+                    -forward.getAsDouble()*speedMultiplier,
+                    -rotation.getAsDouble()*speedMultiplier, heading);
+        }
     }
 }

@@ -8,12 +8,15 @@ import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -37,7 +40,7 @@ public class LiftSubsystem extends SubsystemBase {
     public static double boardPositionStick = 0.73;
     public static double gripPositionStick = 0.24;
     public static double normalPositionStick = 0.35;
-    public static double boardPositionRotation = 0.1;
+    public static double boardPositionRotation = 0;
     public static double gripPositionRotation = 0.88;
     public static double gripPositionGripper = 1;
     public static double ungripPositionGripper = 0;
@@ -68,13 +71,17 @@ public class LiftSubsystem extends SubsystemBase {
     public int error_prior;
     public boolean gripState;
 
+    public Rev2mDistanceSensor gripSensor;
+
 
     public LiftSubsystem(Motor lift,
                          Servo stick,
                          Servo rotation,
                          Servo gripper,
+                         DistanceSensor gripSensor,
                          GamepadEx gamepad,
                          Telemetry telemetry) {
+        this.gripSensor = (Rev2mDistanceSensor) gripSensor;
         if(gamepad != null){
             liftSpeed = ()->-gamepad.getLeftY();
 
@@ -174,7 +181,8 @@ public class LiftSubsystem extends SubsystemBase {
 
             }
         }
-        setGripperState(gripState);
+
+        setGripperState(gripSensor.getDistance(DistanceUnit.MM) < 90);
 
 
     }
